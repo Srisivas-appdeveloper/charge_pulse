@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChargePulse — Predict EV charger failures before they happen</title>
+  <meta name="description" content="ChargePulse predicts EV charging station failures 4 hours before they happen using custom ML on OCPP telemetry. ₹200/charger/month. Built for Indian CPOs." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+  <!-- Nav -->
+  <header class="border-b bg-white">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="font-bold text-xl flex items-center gap-2">
+        <span class="text-emerald-500">⚡</span> ChargePulse
+      </div>
+      <nav class="flex items-center gap-6 text-sm">
+        <a href="#how" class="hover:text-emerald-600">How it works</a>
+        <a href="#pricing" class="hover:text-emerald-600">Pricing</a>
+        <a href="https://app.chargepulse.in" class="hover:text-emerald-600">Sign in</a>
+        <a href="#demo" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700">Request demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="max-w-6xl mx-auto px-6 py-20 text-center">
+    <h1 class="text-5xl md:text-6xl font-bold tracking-tight">
+      Predict EV charger failures
+      <span class="block text-emerald-600">before they happen.</span>
+    </h1>
+    <p class="text-lg text-slate-600 mt-6 max-w-2xl mx-auto">
+      Custom ML on OCPP telemetry — no third-party AI, no monthly LLM fees.
+      Catch faults 4 hours before drivers do. Built for Indian CPOs.
+    </p>
+    <div class="mt-10 flex justify-center gap-4">
+      <a href="#demo" class="bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700">Request a demo</a>
+      <a href="#how" class="border px-6 py-3 rounded-lg font-medium hover:bg-slate-100">How it works</a>
+    </div>
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
+      <div class="bg-white border rounded-lg p-6">
+        <div class="text-3xl font-bold text-red-600">28-35%</div>
+        <div class="text-sm text-slate-600 mt-1">of India's 29,000+ public chargers are non-functional on any given day. <span class="text-slate-400">— SIAM 2025</span></div>
+      </div>
+      <div class="bg-white border rounded-lg p-6">
+        <div class="text-3xl font-bold text-orange-600">72 hours</div>
+        <div class="text-sm text-slate-600 mt-1">average downtime per fault. Drivers find out first, then your ops team.</div>
+      </div>
+      <div class="bg-white border rounded-lg p-6">
+        <div class="text-3xl font-bold text-emerald-600">95%+ uptime</div>
+        <div class="text-sm text-slate-600 mt-1">FAME-III (2026) will likely mandate this for subsidised stations. Get ahead of it.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="bg-white border-y">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <h2 class="text-3xl font-bold text-center">How it works</h2>
+      <p class="text-center text-slate-600 mt-2">Three steps. Live in under 30 minutes.</p>
+      <div class="grid md:grid-cols-3 gap-8 mt-12">
+        <div>
+          <div class="text-emerald-600 text-3xl font-bold">1</div>
+          <h3 class="font-semibold mt-2">Point your chargers</h3>
+          <p class="text-slate-600 text-sm mt-2">
+            Change the CSMS URL on each charger to <code class="bg-slate-100 px-1 rounded">wss://csms.chargepulse.in/ocpp/{cp_id}</code>.
+            We support OCPP 1.6J today, 2.0.1 in pilot. Works with Delta, ABB, Exicom, Servotech.
+          </p>
+        </div>
+        <div>
+          <div class="text-emerald-600 text-3xl font-bold">2</div>
+          <h3 class="font-semibold mt-2">We learn your fleet</h3>
+          <p class="text-slate-600 text-sm mt-2">
+            ChargePulse extracts 24 features per charger every 15 minutes and trains a per-station
+            LSTM autoencoder. After 14 days of baseline, the model knows what 'normal' looks like.
+          </p>
+        </div>
+        <div>
+          <div class="text-emerald-600 text-3xl font-bold">3</div>
+          <h3 class="font-semibold mt-2">Get alerts that matter</h3>
+          <p class="text-slate-600 text-sm mt-2">
+            SMS, WhatsApp, email, Slack, webhook. With predicted failure type and the
+            specific OCPP signal that triggered it. Resolve faster, prevent driver complaints.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="max-w-6xl mx-auto px-6 py-20">
+    <h2 class="text-3xl font-bold text-center">Simple per-charger pricing</h2>
+    <p class="text-center text-slate-600 mt-2">No setup fees. Cancel anytime. 30-day pilot free.</p>
+    <div class="grid md:grid-cols-3 gap-6 mt-12">
+      <div class="bg-white border rounded-lg p-8">
+        <h3 class="font-semibold">Starter</h3>
+        <div class="mt-4"><span class="text-4xl font-bold">₹200</span> <span class="text-slate-500 text-sm">/charger/mo</span></div>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600">
+          <li>✓ Rule-based fault alerts</li>
+          <li>✓ Email + SMS + webhook</li>
+          <li>✓ Fleet map + incident log</li>
+          <li>✓ Up to 100 chargers</li>
+        </ul>
+      </div>
+      <div class="bg-emerald-600 text-white border rounded-lg p-8 relative">
+        <span class="absolute -top-3 right-4 bg-white text-emerald-700 text-xs px-2 py-1 rounded font-medium">MOST POPULAR</span>
+        <h3 class="font-semibold">Pro</h3>
+        <div class="mt-4"><span class="text-4xl font-bold">₹400</span> <span class="opacity-80 text-sm">/charger/mo</span></div>
+        <ul class="mt-6 space-y-2 text-sm">
+          <li>✓ Everything in Starter</li>
+          <li>✓ ML predictions (per-station LSTM)</li>
+          <li>✓ Health-score analytics</li>
+          <li>✓ Vendor comparison reports</li>
+          <li>✓ WhatsApp alerts</li>
+        </ul>
+      </div>
+      <div class="bg-white border rounded-lg p-8">
+        <h3 class="font-semibold">Enterprise</h3>
+        <div class="mt-4"><span class="text-4xl font-bold">₹500</span> <span class="text-slate-500 text-sm">/charger/mo</span></div>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600">
+          <li>✓ Everything in Pro</li>
+          <li>✓ Custom failure-type models</li>
+          <li>✓ Public API + webhooks</li>
+          <li>✓ White-label option</li>
+          <li>✓ Dedicated support engineer</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo form -->
+  <section id="demo" class="bg-slate-900 text-white">
+    <div class="max-w-3xl mx-auto px-6 py-20 text-center">
+      <h2 class="text-3xl font-bold">Request a 30-day pilot</h2>
+      <p class="text-slate-300 mt-2">We'll deploy ChargePulse as a CSMS proxy for your fleet. Free for 30 days. No card.</p>
+      <form action="mailto:hello@chargepulse.in" method="post" enctype="text/plain" class="mt-8 space-y-3 max-w-md mx-auto text-left">
+        <input name="company" placeholder="Company name" class="w-full px-3 py-2 rounded text-slate-900" required />
+        <input name="email" type="email" placeholder="Work email" class="w-full px-3 py-2 rounded text-slate-900" required />
+        <input name="chargers" placeholder="How many chargers do you operate?" class="w-full px-3 py-2 rounded text-slate-900" />
+        <textarea name="notes" rows="3" placeholder="Vendor mix, locations, anything else…" class="w-full px-3 py-2 rounded text-slate-900"></textarea>
+        <button class="w-full bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded font-medium">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 border-t border-slate-800">
+    <div class="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between text-sm">
+      <div>© 2026 ChargePulse · Built in Chennai for Indian CPOs</div>
+      <div class="space-x-4">
+        <a href="mailto:hello@chargepulse.in" class="hover:text-white">hello@chargepulse.in</a>
+        <a href="https://app.chargepulse.in" class="hover:text-white">Sign in</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

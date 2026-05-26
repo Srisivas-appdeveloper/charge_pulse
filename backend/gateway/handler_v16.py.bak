@@ -1,0 +1,262 @@
+"""OCPP 1.6 charge point handler.
+
+One instance per WebSocket connection. Every inbound message is normalized via
+the charger's vendor profile, persisted, and republished to Redis Streams.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timezone
+from uuid import UUID
+
+from ocpp.routing import on
+from ocpp.v16 import ChargePoint as CP16
+from ocpp.v16 import call_result
+from ocpp.v16.enums import RegistrationStatus
+
+from .message_router import MessageRouter
+from .vendor_profiles import VendorProfile, resolve
+
+log = logging.getLogger("chargepulse.gateway.v16")
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class ChargePulseCP16(CP16):
+    def __init__(
+        self,
+        cp_id: str,
+        connection,
+        org_id: UUID,
+        router: MessageRouter,
+        heartbeat_interval: int,
+    ):
+        super().__init__(cp_id, connection)
+        self.org_id = org_id
+        self.router = router
+        self.heartbeat_interval = heartbeat_interval
+        self.vendor_profile: VendorProfile = resolve(None)
+        self.connected_at = _now()
+        self.last_heartbeat = self.connected_at
+
+    @on("BootNotification")
+    async def on_boot(
+        self,
+        charge_point_vendor: str,
+        charge_point_model: str,
+        **kwargs,
+    ):
+        firmware = kwargs.get("firmware_version")
+        serial = kwargs.get("charge_point_serial_number")
+        self.vendor_profile = resolve(charge_point_vendor)
+        boot_at = _now()
+
+        await self.router.upsert_charger_on_boot(
+            cp_id=self.id,
+            org_id=self.org_id,
+            vendor=charge_point_vendor,
+            model=charge_point_model,
+            firmware=firmware,
+            serial=serial,
+            boot_at=boot_at,
+        )
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="boot",
+            payload={
+                "vendor": charge_point_vendor,
+                "model": charge_point_model,
+                "firmware": firmware,
+                "serial": serial,
+            },
+            ts=boot_at,
+        )
+        log.info("Boot %s vendor=%s model=%s", self.id, charge_point_vendor, charge_point_model)
+        return call_result.BootNotificationPayload(
+            current_time=_now().isoformat(),
+            interval=self.vendor_profile.get_heartbeat_interval()
+            or self.heartbeat_interval,
+            status=RegistrationStatus.accepted,
+        )
+
+    @on("Heartbeat")
+    async def on_heartbeat(self):
+        ts = _now()
+        self.last_heartbeat = ts
+        await self.router.update_heartbeat(self.id, ts)
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="heartbeat",
+            payload={},
+            ts=ts,
+        )
+        return call_result.HeartbeatPayload(current_time=ts.isoformat())
+
+    @on("StatusNotification")
+    async def on_status(
+        self,
+        connector_id: int,
+        error_code: str,
+        status: str,
+        **kwargs,
+    ):
+        normalized_status = self.vendor_profile.normalize_status(status)
+        normalized_error = self.vendor_profile.normalize_error_code(error_code)
+        await self.router.update_status(self.id, normalized_status, normalized_error)
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="status",
+            connector_id=connector_id,
+            payload={
+                "status": normalized_status,
+                "error_code": normalized_error,
+                "info": kwargs.get("info"),
+                "vendor_error_code": kwargs.get("vendor_error_code"),
+                "raw_status": status,
+            },
+        )
+        return call_result.StatusNotificationPayload()
+
+    @on("MeterValues")
+    async def on_meter_values(self, connector_id: int, meter_value: list, **kwargs):
+        normalized = self.vendor_profile.normalize_meter_values(meter_value)
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="meter",
+            connector_id=connector_id,
+            payload={
+                "transaction_id": kwargs.get("transaction_id"),
+                "meter_value": normalized,
+            },
+        )
+        return call_result.MeterValuesPayload()
+
+    @on("StartTransaction")
+    async def on_start_transaction(
+        self,
+        connector_id: int,
+        id_tag: str,
+        meter_start: int,
+        timestamp: str,
+        **kwargs,
+    ):
+        started_at = _parse_ts(timestamp) or _now()
+        tx_id = await self.router.record_session_start(
+            cp_id=self.id,
+            org_id=self.org_id,
+            connector_id=connector_id,
+            id_tag=id_tag,
+            meter_start=meter_start,
+            started_at=started_at,
+        )
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="tx_start",
+            connector_id=connector_id,
+            payload={
+                "transaction_id": tx_id,
+                "id_tag": id_tag,
+                "meter_start": meter_start,
+                "timestamp": timestamp,
+            },
+            ts=started_at,
+        )
+        return call_result.StartTransactionPayload(
+            transaction_id=tx_id,
+            id_tag_info={"status": "Accepted"},
+        )
+
+    @on("StopTransaction")
+    async def on_stop_transaction(
+        self,
+        meter_stop: int,
+        timestamp: str,
+        transaction_id: int,
+        **kwargs,
+    ):
+        reason = kwargs.get("reason", "Unknown")
+        stopped_at = _parse_ts(timestamp) or _now()
+        await self.router.record_session_stop(
+            cp_id=self.id,
+            transaction_id=transaction_id,
+            meter_stop=meter_stop,
+            stopped_at=stopped_at,
+            stop_reason=reason,
+        )
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="tx_stop",
+            payload={
+                "transaction_id": transaction_id,
+                "meter_stop": meter_stop,
+                "timestamp": timestamp,
+                "reason": reason,
+            },
+            ts=stopped_at,
+        )
+        return call_result.StopTransactionPayload(
+            id_tag_info={"status": "Accepted"}
+        )
+
+    @on("Authorize")
+    async def on_authorize(self, id_tag: str, **kwargs):
+        # We don't manage auth lists; CPO's system does. Always accept.
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="authorize",
+            payload={"id_tag": id_tag},
+        )
+        return call_result.AuthorizePayload(id_tag_info={"status": "Accepted"})
+
+    @on("DataTransfer")
+    async def on_data_transfer(self, vendor_id: str, **kwargs):
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="data_transfer",
+            payload={
+                "vendor_id": vendor_id,
+                "message_id": kwargs.get("message_id"),
+                "data": kwargs.get("data"),
+            },
+        )
+        return call_result.DataTransferPayload(status="Accepted")
+
+    @on("DiagnosticsStatusNotification")
+    async def on_diagnostics_status(self, status: str, **kwargs):
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="diagnostics_status",
+            payload={"status": status},
+        )
+        return call_result.DiagnosticsStatusNotificationPayload()
+
+    @on("FirmwareStatusNotification")
+    async def on_firmware_status(self, status: str, **kwargs):
+        await self.router.publish(
+            cp_id=self.id,
+            org_id=self.org_id,
+            event_type="firmware_status",
+            payload={"status": status},
+        )
+        return call_result.FirmwareStatusNotificationPayload()
+
+
+def _parse_ts(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        # OCPP timestamps are ISO 8601, often ending in Z.
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None

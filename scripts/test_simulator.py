@@ -1,0 +1,80 @@
+"""Minimal OCPP 1.6 simulator: Boot → Status → Heartbeats → StartTx → MeterValues → StopTx.
+
+Use against the gateway to verify Phase 1 end-to-end:
+    python scripts/test_simulator.py
+"""
+import asyncio
+from datetime import datetime, timezone
+
+import websockets
+from ocpp.v16 import ChargePoint as CP, call
+
+
+class SimCP(CP):
+    pass
+
+
+async def main(cp_id: str = "CP001"):
+    url = f"ws://localhost:9000/ocpp/{cp_id}"
+    print(f"Connecting to {url}")
+    async with websockets.connect(url, subprotocols=["ocpp1.6"]) as ws:
+        cp = SimCP(cp_id, ws)
+        listener = asyncio.create_task(cp.start())
+        await asyncio.sleep(0.5)
+
+        print("→ BootNotification")
+        r = await cp.call(call.BootNotification(
+            charge_point_vendor="Delta",
+            charge_point_model="DC-60kW",
+            firmware_version="1.2.3",
+            charge_point_serial_number="SN-12345",
+        ))
+        print(f"  ← {r}")
+
+        print("→ StatusNotification(Available)")
+        await cp.call(call.StatusNotification(
+            connector_id=1, error_code="NoError", status="Available",
+        ))
+
+        for i in range(3):
+            print(f"→ Heartbeat {i+1}")
+            await cp.call(call.Heartbeat())
+            await asyncio.sleep(1)
+
+        print("→ StartTransaction")
+        tx = await cp.call(call.StartTransaction(
+            connector_id=1, id_tag="USER-ABC", meter_start=1000,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        ))
+        print(f"  ← tx_id={tx.transaction_id}")
+
+        print("→ MeterValues")
+        await cp.call(call.MeterValues(
+            connector_id=1,
+            transaction_id=tx.transaction_id,
+            meter_value=[{
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "sampled_value": [
+                    {"value": "1234", "measurand": "Energy.Active.Import.Register", "unit": "Wh"},
+                    {"value": "230.5", "measurand": "Voltage", "unit": "V"},
+                    {"value": "16.0", "measurand": "Current.Import", "unit": "A"},
+                ],
+            }],
+        ))
+
+        await asyncio.sleep(1)
+        print("→ StopTransaction")
+        await cp.call(call.StopTransaction(
+            transaction_id=tx.transaction_id,
+            meter_stop=1500,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            reason="EVDisconnected",
+        ))
+
+        await asyncio.sleep(0.5)
+        listener.cancel()
+        print("Done.")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

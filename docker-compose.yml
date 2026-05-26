@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_DB: chargepulse
+      POSTGRES_USER: chargepulse
+      POSTGRES_PASSWORD: change_me_in_production
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/home/postgres/pgdata/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  backend:
+    build: ./backend
+    command: >
+      bash -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+
+  gateway:
+    build: ./backend
+    command: python -m gateway.server
+    ports:
+      - "9000:9000"
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:

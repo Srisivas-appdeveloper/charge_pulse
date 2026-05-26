@@ -1,0 +1,9 @@
+cp_id,display_name,vendor,model,city,state,pincode,lat,lng,connector_count
+CP-CHN-001,Anna Salai DC-1,Delta,DC-60kW,Chennai,TN,600002,13.0732,80.2609,1
+CP-CHN-002,T Nagar Mall,ABB,Terra-54,Chennai,TN,600017,13.0418,80.2341,2
+CP-CHN-003,OMR-Sholinganallur,Exicom,Harmony-60,Chennai,TN,600119,12.9000,80.2273,1
+CP-BLR-001,Indiranagar 100ft,Delta,DC-60kW,Bangalore,KA,560038,12.9719,77.6412,1
+CP-BLR-002,Whitefield ITPL,Servotech,STC-30,Bangalore,KA,560066,12.9869,77.7301,1
+CP-DEL-001,Connaught Place,ABB,Terra-54,New Delhi,DL,110001,28.6315,77.2167,2
+CP-DEL-002,Saket Select City,Delta,DC-60kW,New Delhi,DL,110017,28.5286,77.2192,1
+CP-MUM-001,Lower Parel,Exicom,Harmony-60,Mumbai,MH,400013,19.0044,72.8270,1
