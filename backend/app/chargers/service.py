@@ -332,3 +332,12 @@ def _decode_jsonb(value):
         except (ValueError, TypeError):
             return {"raw": value}
     return value or {}
+
+
+async def delete_charger(pool: asyncpg.Pool, org_id: UUID, cp_id: str) -> None:
+    async with pool.acquire() as conn:
+        res = await conn.execute(
+            "DELETE FROM chargers WHERE cp_id = $1 AND org_id = $2", cp_id, org_id
+        )
+        if res == "DELETE 0":
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "charger not found")

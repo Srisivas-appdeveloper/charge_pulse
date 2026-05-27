@@ -23,8 +23,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=T
 @dataclass(frozen=True)
 class CurrentUserCtx:
     user_id: UUID
-    org_id: UUID
+    org_id: UUID | None
     role: str
+    is_superadmin: bool = False
+    impersonating: bool = False
 
 
 async def _get_pool() -> asyncpg.Pool:
@@ -37,10 +39,13 @@ async def _get_current_user(token: str = Depends(oauth2_scheme)) -> CurrentUserC
     except ValueError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid token")
     try:
+        org_id_raw = payload.get("org_id")
         return CurrentUserCtx(
             user_id=UUID(payload["sub"]),
-            org_id=UUID(payload["org_id"]),
+            org_id=UUID(org_id_raw) if org_id_raw is not None else None,
             role=payload["role"],
+            is_superadmin=payload.get("is_superadmin", False),
+            impersonating=payload.get("impersonating", False),
         )
     except (KeyError, ValueError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "malformed token")

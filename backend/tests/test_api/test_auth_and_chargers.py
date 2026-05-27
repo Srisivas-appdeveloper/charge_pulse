@@ -32,6 +32,7 @@ def session_token():
     body = {
         "org_name": f"Test Org {suffix}", "email": email,
         "password": "supersecret123", "full_name": "Pytest Runner",
+        "phone_number": "1234567890",
     }
     r = httpx.post(f"{BASE}/auth/register", json=body)
     assert r.status_code == 200, r.text
@@ -71,6 +72,7 @@ def test_charger_crud_and_multitenancy_isolation(session_token):
     r2 = httpx.post(f"{BASE}/auth/register", json={
         "org_name": "Other", "email": other_email,
         "password": "supersecret123", "full_name": "Other",
+        "phone_number": "1234567890",
     })
     assert r2.status_code == 200
     other_token = r2.json()["access_token"]

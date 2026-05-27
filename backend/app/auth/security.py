@@ -5,28 +5,40 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from app.config import get_settings
 
 settings = get_settings()
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(plain: str) -> str:
-    return _pwd.hash(plain)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(plain.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
-def create_access_token(*, user_id: UUID, org_id: UUID, role: str) -> str:
+def create_access_token(
+    *,
+    user_id: UUID,
+    org_id: UUID | None,
+    role: str,
+    is_superadmin: bool = False,
+    impersonating: bool = False,
+) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),
-        "org_id": str(org_id),
+        "org_id": str(org_id) if org_id is not None else None,
         "role": role,
+        "is_superadmin": is_superadmin,
+        "impersonating": impersonating,
         "iat": int(now.timestamp()),
         "exp": int(
             (now + timedelta(minutes=settings.jwt_access_token_expire_minutes)).timestamp()

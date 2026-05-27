@@ -7,7 +7,7 @@ export default function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
   const [form, setForm] = useState({
-    org_name: "", email: "", password: "", full_name: "",
+    org_name: "", email: "", password: "", full_name: "", phone_number: "",
   });
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -30,6 +30,7 @@ export default function Register() {
         {err && <div className="text-sm bg-red-50 text-red-700 p-2 rounded">{err}</div>}
         <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Organisation name" value={form.org_name} onChange={upd("org_name")} required />
         <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Your full name" value={form.full_name} onChange={upd("full_name")} required />
+        <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Phone number" value={form.phone_number} onChange={upd("phone_number")} required />
         <input className="w-full border rounded px-3 py-2 text-sm" type="email" placeholder="Email" value={form.email} onChange={upd("email")} required />
         <input className="w-full border rounded px-3 py-2 text-sm" type="password" placeholder="Password (min 8 chars)" value={form.password} onChange={upd("password")} minLength={8} required />
         <button disabled={busy} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded text-sm font-medium disabled:opacity-50">

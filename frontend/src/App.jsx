@@ -14,6 +14,8 @@ import IncidentDetail from "./pages/IncidentDetail";
 import AlertConfig from "./pages/AlertConfig";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import AcceptInvite from "./pages/AcceptInvite";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -26,6 +28,12 @@ function Protected() {
   return <Layout />;
 }
 
+function AdminProtected() {
+  const { user } = useAuth();
+  if (user?.role !== "superadmin") return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={qc}>
@@ -34,6 +42,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route element={<Protected />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/map" element={<FleetMap />} />
@@ -44,6 +53,9 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/alerts" element={<AlertConfig />} />
               <Route path="/settings" element={<Settings />} />
+              <Route element={<AdminProtected />}>
+                <Route path="/admin" element={<SuperAdminDashboard />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

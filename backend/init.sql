@@ -25,11 +25,23 @@ CREATE TABLE users (
     email           TEXT NOT NULL UNIQUE,
     password_hash   TEXT NOT NULL,
     full_name       TEXT NOT NULL,
+    phone_number    TEXT,
     role            TEXT NOT NULL DEFAULT 'member'
                     CHECK (role IN ('owner', 'admin', 'member', 'viewer')),
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    last_login_at   TIMESTAMPTZ
+    last_login_at   TIMESTAMPTZ,
+    invited_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+    invite_token    TEXT,
+    invite_accepted_at TIMESTAMPTZ
+);
+
+CREATE TABLE superadmins (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email           TEXT UNIQUE NOT NULL,
+    password_hash   TEXT NOT NULL,
+    full_name       TEXT NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE chargers (

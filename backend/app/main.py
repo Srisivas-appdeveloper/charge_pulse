@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.admin.router import router as admin_router
 from app.alerts.router import router as alerts_router
 from app.analytics.router import router as analytics_router
 from app.auth.router import router as auth_router
@@ -14,6 +15,7 @@ from app.config import get_settings
 from app.db.session import close_pool, get_pool
 from app.fleet.router import router as fleet_router
 from app.incidents.router import router as incidents_router
+from app.users.router import router as users_router
 from app.ws import router as ws_router
 
 settings = get_settings()
@@ -49,6 +51,8 @@ async def health() -> dict:
 
 API_PREFIX = "/api/v1"
 app.include_router(auth_router, prefix=API_PREFIX)
+app.include_router(admin_router, prefix=API_PREFIX)
+app.include_router(users_router, prefix=API_PREFIX)
 app.include_router(chargers_router, prefix=API_PREFIX)
 app.include_router(incidents_router, prefix=API_PREFIX)
 app.include_router(alerts_router, prefix=API_PREFIX)
