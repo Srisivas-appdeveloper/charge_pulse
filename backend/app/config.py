@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# backend/.env — resolved relative to this file, so CWD doesn't matter
+_BACKEND_ENV = Path(__file__).resolve().parent.parent / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(_BACKEND_ENV), extra="ignore")
 
     # Database
     postgres_host: str = "postgres"
