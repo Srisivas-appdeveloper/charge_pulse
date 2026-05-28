@@ -16,6 +16,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import AcceptInvite from "./pages/AcceptInvite";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import AllUsers from "./pages/AllUsers";
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="/settings" element={<Settings />} />
               <Route element={<AdminProtected />}>
                 <Route path="/admin" element={<SuperAdminDashboard />} />
+                <Route path="/admin/users" element={<AllUsers />} />
               </Route>
             </Route>
           </Routes>

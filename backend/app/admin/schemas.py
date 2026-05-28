@@ -42,3 +42,28 @@ class AdminDashboardStats(BaseModel):
     total_chargers: int
     total_incidents: int
     mrr: float
+
+
+class UserAdminOut(BaseModel):
+    id: UUID
+    email: str
+    full_name: str
+    role: str
+    phone_number: str | None = None
+    is_active: bool
+    created_at: datetime
+    last_login_at: datetime | None = None
+    invite_accepted_at: datetime | None = None
+    org_id: UUID | None = None
+    org_name: str | None = None
+    is_superadmin: bool = False
+
+
+class ResetPasswordResponse(BaseModel):
+    user_id: UUID
+    email: str
+    temporary_password: str
+    message: str = (
+        "Share this password with the user over a secure channel. "
+        "They should change it immediately after logging in."
+    )

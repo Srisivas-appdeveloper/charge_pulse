@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Map, AlertTriangle, BarChart3, Bell, Zap, ShieldCheck, Settings as SettingsIcon, Building2 } from "lucide-react";
+import { LayoutDashboard, Map, AlertTriangle, BarChart3, Bell, Zap, ShieldCheck, Settings as SettingsIcon, Building2, Users } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 const ownerItems = [
@@ -15,6 +15,7 @@ const ownerItems = [
 const adminItems = [
   { to: "/admin", label: "Admin Dashboard", icon: ShieldCheck, end: true },
   { to: "/admin", label: "All Organisations", icon: Building2 },
+  { to: "/admin/users", label: "All Users", icon: Users },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

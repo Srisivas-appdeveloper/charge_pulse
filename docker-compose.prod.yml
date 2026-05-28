@@ -91,6 +91,17 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  training_scheduler:
+    build: ./backend
+    restart: unless-stopped
+    command: python -m workers.training_scheduler
+    env_file: .env.prod
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_started }
+    volumes:
+      - modelstore:/app/ml/model_store
+
   frontend:
     build:
       context: ./frontend

@@ -21,6 +21,12 @@ dependencies = [
     "python-dotenv",
     "structlog",
     "apscheduler==3.10.*",
+    "torch>=2.4.0",
+    "xgboost>=2.1.0",
+    "scikit-learn>=1.5.0",
+    "scikit-survival>=0.23.0",
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
 ]
 
 [project.optional-dependencies]
